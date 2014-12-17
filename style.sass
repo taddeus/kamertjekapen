@@ -1,0 +1,54 @@
+$line: 7px
+$room: 40px
+$bordercolor: #000
+$bgcolor: #eee
+
+$inactivecolor: #d1d1d1
+$activecolor: $bordercolor
+$hovercolor: green
+
+@mixin elem($w, $h)
+  float: left
+  display: block
+  width: $w
+  height: $h
+
+@mixin hoverable
+  background-color: $inactivecolor
+
+  &:hover
+    background-color: $hovercolor
+    cursor: pointer
+
+.board
+  display: inline-block
+  //border: $line solid $bordercolor
+  background-color: $bgcolor
+
+  @mixin clicked
+    background-color: $bordercolor !important
+    cursor: default !important
+
+  .clicked
+    @include clicked
+
+  .dot
+    @include elem($line, $line)
+    @include clicked
+
+  .wall-h
+    @include elem($room, $line)
+    @include hoverable
+
+  .wall-v
+    @include elem($line, $room)
+    @include hoverable
+
+  .room
+    @include elem($room, $room)
+
+.message
+  display: none
+  font: normal 18px Tahoma, Arial, sans-serif
+  vertical-align: top
+  margin-top: 8px

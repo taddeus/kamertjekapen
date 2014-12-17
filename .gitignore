@@ -1,0 +1,5 @@
+*.swp
+*.pyc
+.sass-cache
+www/*.css
+www/*.js
