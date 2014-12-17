@@ -18,7 +18,7 @@ divin = (parent, cls) ->
     parent.appendChild elem
     elem
 
-class Game
+class Board
     constructor: (@w, @h, elem) ->
         @render elem if elem
 
@@ -75,24 +75,74 @@ class Game
                 divin row, "wall-h#{clicked}"
             divin row, 'dot'
 
-game = new Game 6, 6
-game.render document.getElementById 'game'
-game.click_wall 2, 2, WALL_RIGHT
-game.click_wall 2, 2, WALL_BOTTOM
-game.click_wall 1, 2, WALL_RIGHT
-game.click_wall 2, 2, WALL_TOP
-game.occupy 2, 2, 2
+    destroy: ->
+        @board.parentNode.removeChild @board
 
-#ws = new WebSocket URL
-#
-#ws.onopen = ->
-#    console.log 'open'
-#
-#ws.onclose = ->
-#    console.log 'close'
-#
-#ws.onerror = (e) ->
-#    console.log 'error', e
-#
-#ws.onmessage = (msg) ->
-#    console.log 'msg', msg
+show_error = alert
+
+set_this_player = (id) ->
+
+add_other_player = (id) ->
+
+remove_other_player = (id) ->
+
+set_turn_player = (id) ->
+
+finish = (scores) ->
+    console.log 'scores:', scores
+
+ws = new WebSocket URL
+
+ws.send_msg = (mtype, args...) ->
+    @send [mtype].concat(args).join ';'
+
+ws.onopen = ->
+    console.debug 'open'
+
+    if location.hash
+        @send_msg 'join', location.hash.substr 1
+    else
+        @send_msg 'newgame', 5, 6
+
+ws.onclose = ->
+    console.debug 'close'
+    @board?.destroy()
+
+ws.onerror = (e) ->
+    console.debug 'error', e
+
+ws.onmessage = (msg) ->
+    [mtype, args...] = msg.data.split ';'
+    args = ((if s.match /^\d+$/ then parseInt s else s) for s in args)
+    console.debug 'msg:', mtype, args
+
+    switch mtype
+        when 'newgame'
+            [@sid, w, h, player] = args
+            @board = new Board w, h
+            @board.render document.getElementById 'board'
+            location.hash = @sid
+            set_this_player player
+        when 'join'
+            add_other_player args[0]
+        when 'leave'
+            remove_other_player args[0]
+        when 'clickwall'
+            [x, y, direction] = args
+            @board.click_wall x, y, direction
+        when 'occupy'
+            [x, y, player] = args
+            @board.occupy x, y, player
+        when 'turn'
+            set_turn_player args[0]
+        when 'finish'
+            finish (s.split(':').map parseInt for s in args)
+        when 'error'
+            error = args[0]
+
+            if error == 'no such session'
+                @send_msg 'newgame', 5, 6
+            else
+                show_error error
+        else
+            show_error 'received invalid message from server'

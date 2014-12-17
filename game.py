@@ -6,7 +6,7 @@ WALL_LEFT   = 8
 WALL_ALL = WALL_TOP | WALL_RIGHT | WALL_BOTTOM | WALL_LEFT
 
 
-class Game:
+class Board:
     def __init__(self, w, h):
         assert w > 1 and h > 1
         self.w = w
