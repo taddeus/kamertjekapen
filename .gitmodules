@@ -1,0 +1,3 @@
+[submodule "wspy"]
+	path = wspy
+	url = git@github.com:taddeus/wspy.git
