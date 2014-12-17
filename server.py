@@ -84,6 +84,7 @@ class Session:
         else:
             index = (self.clients.index(self.turn) + 1) % len(self.clients)
             self.turn = self.clients[index]
+            self.bcast('turn', self.turn.player)
 
     def bcast(self, mtype, *args):
         encoded = Msg(mtype, *args).encode()
