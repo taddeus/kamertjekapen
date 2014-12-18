@@ -1,6 +1,6 @@
 .PHONY: all check clean
 
-all: www/style.css www/game.js
+all: www/style.css www/client.js
 
 www/%.css: %.sass
 	sass $< $@
