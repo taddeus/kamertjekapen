@@ -4,7 +4,7 @@ import logging
 import time
 from hashlib import sha1
 
-from wspy import AsyncServer, TextMessage
+from wspy import AsyncServer, TextMessage, DeflateFrame, WebkitDeflateFrame
 from game import Board
 
 
@@ -12,7 +12,7 @@ class BadRequest(RuntimeError):
     pass
 
 
-def check(condition, error='invalid type or args'):
+def check(condition, error='invalid format'):
     if not condition:
         raise BadRequest(error)
 
@@ -78,9 +78,8 @@ class Session:
                 scores = scores.items()
                 scores.sort(key=lambda (player, score): score, reverse=True)
 
-                self.bcast('finish', *['%d:%d' % s for s in scores])
-                logging.info('finishing session %s' % self.sid)
                 self.state = STATE_FINISHED
+                self.bcast('finish', *['%d:%d' % s for s in scores])
         else:
             index = (self.clients.index(self.turn) + 1) % len(self.clients)
             self.turn = self.clients[index]
@@ -148,6 +147,9 @@ class GameServer(AsyncServer):
                 check(client.session, 'no session associated with client')
                 client.session.click_wall(client, x, y, direction)
 
+                if client.session.state == STATE_FINISHED:
+                    logging.info('session %s finished' % client.session.sid)
+
             else:
                 raise BadRequest('unknown message type')
 
@@ -165,11 +167,9 @@ class GameServer(AsyncServer):
                 del self.sessions[client.session.sid]
 
 
-if __name__ == '__main__':
-    if len(sys.argv) < 2:
-        print >>sys.stderr, 'usage: % PORT' % sys.argv[0]
-        sys.exit(1)
 
-    port = int(sys.argv[1])
-    GameServer(('', port)).run()
-    #GameServer(('', port), loglevel=logging.DEBUG).run()
+if __name__ == '__main__':
+    port = int(sys.argv[1]) if len(sys.argv) > 1 else 8099
+    GameServer(('localhost', port),
+               extensions=[DeflateFrame(), WebkitDeflateFrame()],
+               loglevel=logging.DEBUG).run()

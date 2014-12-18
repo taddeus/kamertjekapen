@@ -94,6 +94,7 @@ finish = (scores) ->
 ws = new WebSocket URL
 
 ws.send_msg = (mtype, args...) ->
+    console.debug '>', mtype, args
     @send [mtype].concat(args).join ';'
 
 ws.onopen = ->
@@ -113,8 +114,8 @@ ws.onerror = (e) ->
 
 ws.onmessage = (msg) ->
     [mtype, args...] = msg.data.split ';'
-    args = ((if s.match /^\d+$/ then parseInt s else s) for s in args)
-    console.debug 'msg:', mtype, args
+    args = args.map (s) -> if s.match /^\d+$/ then parseInt s else s
+    console.debug '<', mtype, args
 
     switch mtype
         when 'newgame'
