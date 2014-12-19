@@ -91,6 +91,8 @@ set_turn_player = (id) ->
 finish = (scores) ->
     console.log 'scores:', scores
 
+cancel = (reason) ->
+
 ws = new WebSocket URL
 
 ws.send_msg = (mtype, args...) ->
@@ -138,6 +140,8 @@ ws.onmessage = (msg) ->
             set_turn_player args[0]
         when 'finish'
             finish (s.split(':').map parseInt for s in args)
+        when 'cancel'
+            cancel args[0]
         when 'error'
             error = args[0]
 

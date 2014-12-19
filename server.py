@@ -36,7 +36,7 @@ class Msg:
 
 
 STATE_JOINING = 0
-STATE_STARTED = 1
+STATE_PLAYING = 1
 STATE_FINISHED = 2
 
 
@@ -60,7 +60,7 @@ class Session:
     def click_wall(self, client, x, y, direction):
         check(self.turn is client, 'not your turn')
         check(self.state < STATE_FINISHED, 'already finished')
-        self.state = STATE_STARTED
+        self.state = STATE_PLAYING
 
         occupied = self.board.click_wall(x, y, direction, client.player)
         self.bcast('clickwall', x, y, direction)
@@ -110,6 +110,12 @@ class Session:
         self.clients.remove(client)
         self.bcast('leave', client.player)
 
+        if self.state == STATE_PLAYING:
+            self.bcast('cancel', 'a player has quit before the game ended')
+        elif client is self.turn:
+            self.turn = self.clients[0]
+            self.bcast('turn', self.turn.player)
+
     def is_dead(self):
         return not self.clients
 
@@ -144,7 +150,7 @@ class GameServer(AsyncServer):
             elif msg.mtype == 'clickwall':
                 check(len(msg.args) == 3)
                 x, y, direction = msg.args
-                check(client.session, 'no session associated with client')
+                check(hasattr(client, 'session'), 'no session associated with client')
                 client.session.click_wall(client, x, y, direction)
 
                 if client.session.state == STATE_FINISHED:
